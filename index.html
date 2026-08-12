@@ -430,7 +430,7 @@
 
     <div class="app" id="appContainer" style="display: none;">
         <div class="top-bar" id="topBar">
-            <div class="genre-badge" id="genreBadge" onclick="openGenres()">MPB</div>
+            <div class="genre-badge" id="genreBadge" onclick="openGenres()">FANK</div>
             <div class="top-buttons">
                 <div class="search-wrapper">
                     <input type="text" class="search-input" id="searchInput" placeholder="🔍 Buscar" autocomplete="off" autocorrect="off" spellcheck="false">
@@ -557,8 +557,9 @@
             
             // 🔥 TODOS OS FORMATOS SUPORTADOS
             const EXTENSOES = ['mp3', 'm4a', 'mp4', 'aac', 'ogg', 'opus', 'wav', 'flac'];
-            const REPOSITORIOS = ['mpbtop', 'poptop', 'sertanejo', 'forrotop', 'sambatop', 'bregatop', 'reggaetop', 'modatop', 'religiosa', 'play12'];
+            const REPOSITORIOS = ['mpbtop', 'poptop', 'sertanejo', 'forrotop', 'sambatop', 'bregatop', 'reggaetop', 'modatop', 'religiosa', 'play12', 'fank'];
 
+            // ---------- ALTERAÇÃO: adicionado o gênero FANK ----------
             const GENRE_URLS = {
                 'MPB': 'https://raw.githubusercontent.com/radiolojasjc-hub/mpbtop/refs/heads/main/mpb.json',
                 'POP': 'https://raw.githubusercontent.com/radiolojasjc-hub/poptop/refs/heads/main/pop.json',
@@ -568,7 +569,8 @@
                 'BREGA': 'https://raw.githubusercontent.com/radiolojasjc-hub/bregatop/refs/heads/main/brega.json',
                 'REGGAE': 'https://raw.githubusercontent.com/radiolojasjc-hub/reggaetop/refs/heads/main/reggae.json',
                 'MODA TOP': 'https://raw.githubusercontent.com/radiolojasjc-hub/modatop/refs/heads/main/moda.json',
-                'RELIGIOSA': 'https://raw.githubusercontent.com/radiolojasjc-hub/religiosa/refs/heads/main/religiosa.json'
+                'RELIGIOSA': 'https://raw.githubusercontent.com/radiolojasjc-hub/religiosa/refs/heads/main/religiosa.json',
+                'FANK': 'https://raw.githubusercontent.com/radiolojasjc-hub/fank/refs/heads/main/fank.json'  // NOVO
             };
 
             const CORES_POR_GENERO = {
@@ -580,8 +582,10 @@
                 'BREGA': '#ff66aa',
                 'REGGAE': '#00ffaa',
                 'MODA TOP': '#ff4400',
-                'RELIGIOSA': '#aa55ff'
+                'RELIGIOSA': '#aa55ff',
+                'FANK': '#ff00ff'   // NOVO - magenta
             };
+            // ----------------------------------------------------------
 
             // ============================================================
             // VARIÁVEIS
@@ -593,7 +597,7 @@
             let shuffleMode = false;
             let isBackgroundActive = false;
             let timerInterval = null;
-            let modoAtual = "MPB";
+            let modoAtual = "FANK";   // ALTERADO: padrão agora é FANK
             let historicoReproducao = [];
             let favorites = [];
             let modoFavoritosAtivo = false;
@@ -1593,11 +1597,11 @@
                 }
 
                 try {
-                    const listaPrincipal = await carregarPlaylistPrincipal();
-                    
-                    if (listaPrincipal && listaPrincipal.length > 0) {
-                        musicas = listaPrincipal;
-                        modoAtual = 'MPB';
+                    // ALTERADO: tenta carregar o gênero FANK primeiro
+                    let listaFank = await carregarPlaylistPorGenero('FANK');
+                    if (listaFank && listaFank.length > 0) {
+                        musicas = listaFank;
+                        modoAtual = 'FANK';
                         currentPlaylist = shuffleArray([...musicas]);
                         currentIndex = 0;
                         ultimoId = null;
@@ -1606,12 +1610,13 @@
                             updateNowPlaying(primeira);
                             adicionarAoHistorico(primeira);
                         }
-                        genreBadge.innerHTML = 'MPB';
-                        console.log(`✅ Iniciou com ${musicas.length} músicas do play.json`);
+                        genreBadge.innerHTML = 'FANK';
+                        console.log(`✅ Iniciou com ${musicas.length} músicas do FANK`);
                     } else {
-                        const listaMPB = await carregarPlaylistPorGenero('MPB');
-                        if (listaMPB && listaMPB.length > 0) {
-                            musicas = listaMPB;
+                        // Fallback: tenta carregar play.json
+                        const listaPrincipal = await carregarPlaylistPrincipal();
+                        if (listaPrincipal && listaPrincipal.length > 0) {
+                            musicas = listaPrincipal;
                             modoAtual = 'MPB';
                             currentPlaylist = shuffleArray([...musicas]);
                             currentIndex = 0;
@@ -1622,8 +1627,25 @@
                                 adicionarAoHistorico(primeira);
                             }
                             genreBadge.innerHTML = 'MPB';
+                            console.log(`✅ Iniciou com ${musicas.length} músicas do play.json`);
                         } else {
-                            showNotification('❌ Nenhuma playlist carregada', 2000);
+                            // Último fallback: MPB
+                            const listaMPB = await carregarPlaylistPorGenero('MPB');
+                            if (listaMPB && listaMPB.length > 0) {
+                                musicas = listaMPB;
+                                modoAtual = 'MPB';
+                                currentPlaylist = shuffleArray([...musicas]);
+                                currentIndex = 0;
+                                ultimoId = null;
+                                const primeira = currentPlaylist[0];
+                                if (primeira) {
+                                    updateNowPlaying(primeira);
+                                    adicionarAoHistorico(primeira);
+                                }
+                                genreBadge.innerHTML = 'MPB';
+                            } else {
+                                showNotification('❌ Nenhuma playlist carregada', 2000);
+                            }
                         }
                     }
 
